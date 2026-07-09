@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>影视搜索与解析</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" type="image/svg+xml">
     <style>
         * {
             margin: 0;
@@ -416,7 +417,7 @@
                     <button onclick="refreshIframe()">刷新</button>
                     <button onclick="openInNewTab()">在新标签页打开</button>
                 </div>
-                <iframe id="searchIframe"></iframe>
+                <iframe id="searchIframe" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen *"></iframe>
             </div>
         </div>
 
@@ -438,7 +439,7 @@
                 <button class="btn btn-primary" onclick="clearParse()">清空</button>
             </div>
             <div class="status-message" id="parseStatus"></div>
-            <iframe id="playerFrame"></iframe>
+            <iframe id="playerFrame" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen *"></iframe>
         </div>
     </div>
 
