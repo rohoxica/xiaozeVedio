@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影视搜索与解析</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" type="image/svg+xml">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+        }
+
+        .search-section, .parse-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-section h2, .parse-section h2 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-section h2::before, .parse-section h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, #00d4ff, #0099ff);
+            border-radius: 2px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .search-box input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #ffaa00, #ff6b00);
+            color: white;
+        }
+
+        .btn-copy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 170, 0, 0.4);
+        }
+
+        .search-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .platform-btn {
+            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .platform-btn:hover, .platform-btn.active {
+            background: rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .guide-section {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            border-radius: 0 10px 10px 0;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .guide-section h3 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .guide-section ol {
+            color: rgba(255, 255, 255, 0.8);
+            padding-left: 20px;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .guide-section code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .result-item .title {
+            color: white;
+            font-size: 1rem;
+            flex: 1;
+        }
+
+        .result-item .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-iframe-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .search-iframe-container.active {
+            display: block;
+        }
+
+        .search-iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .iframe-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .iframe-controls button {
+            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .iframe-controls button:hover {
+            background: rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .parse-url {
+            width: 100%;
+            padding: 15px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+
+        .parse-url:focus {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .parse-url::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .parse-btn-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .parse-btn-group .btn {
+            flex: 1;
+        }
+
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .quick-link {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-link:hover {
+            background: rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+            color: white;
+        }
+
+        .copied {
+            animation: copied 0.5s ease;
+        }
+
+        @keyframes copied {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background: #00cc6a !important; }
+            100% { transform: scale(1); }
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status-message.success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            display: block;
+        }
+
+        .status-message.error {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            display: block;
+        }
+
+        .parse-section iframe {
+            width: 100%;
+            height: 450px;
+            border: none;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .parse-section iframe.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .parse-btn-group {
+                flex-direction: column;
+            }
+
+            .search-options {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 影视搜索与解析</h1>
+            <p>搜索影视名称，获取官方链接，一键解析观看</p>
+        </div>
+
+        <div class="search-section">
+            <h2>影视搜索</h2>
+            <div class="guide-section">
+                <h3>📖 使用说明</h3>
+                <ol>
+                    <li>输入影视名称，点击"打开"跳转到对应视频平台</li>
+                    <li>在平台中找到你想看的具体剧集（如第一集）</li>
+                    <li>进入剧集播放页面后，复制浏览器地址栏的完整链接</li>
+                    <li>将复制的链接粘贴到下方解析框，点击解析观看</li>
+                </ol>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <p style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">💡 注意：由于浏览器安全限制，无法自动获取具体剧集链接，需手动复制</p>
+                </div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="请输入影视名称...">
+                <button class="btn btn-primary" onclick="searchMedia()">搜索</button>
+            </div>
+
+            <div class="search-options">
+                <button class="platform-btn active" data-platform="all">全部平台</button>
+                <button class="platform-btn" data-platform="iqiyi">爱奇艺</button>
+                <button class="platform-btn" data-platform="youku">优酷</button>
+                <button class="platform-btn" data-platform="tencent">腾讯视频</button>
+                <button class="platform-btn" data-platform="mgtv">芒果TV</button>
+                <button class="platform-btn" data-platform="bilibili">哔哩哔哩</button>
+            </div>
+
+            <div id="searchResults"></div>
+            <div class="status-message" id="searchStatus"></div>
+            
+            <div class="search-iframe-container" id="searchIframeContainer">
+                <div class="iframe-controls">
+                    <button onclick="closeIframe()">关闭</button>
+                    <button onclick="refreshIframe()">刷新</button>
+                    <button onclick="openInNewTab()">在新标签页打开</button>
+                </div>
+                <iframe id="searchIframe" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen *"></iframe>
+            </div>
+        </div>
+
+        <div class="parse-section">
+            <h2>链接解析</h2>
+            <div class="guide-section" style="border-color: #00ff88;">
+                <h3 style="color: #00ff88;">🔗 推荐解析网站</h3>
+                <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 10px;">点击下方快捷链接打开解析网站，然后粘贴影视链接解析：</p>
+                <div class="quick-links">
+                    <span class="quick-link" onclick="openParseSite('https://www.xxxjiexi.com')">解析站1</span>
+                    <span class="quick-link" onclick="openParseSite('https://www.xxxjx.com')">解析站2</span>
+                    <span class="quick-link" onclick="openParseSite('https://www.xxparse.com')">解析站3</span>
+                    <span class="quick-link" onclick="openParseSite('https://www.xxxplay.com')">解析站4</span>
+                </div>
+            </div>
+            <input type="text" id="parseInput" class="parse-url" placeholder="请粘贴影视链接或输入解析网址...">
+            <div class="parse-btn-group">
+                <button class="btn btn-success" onclick="parseLink()">解析观看</button>
+                <button class="btn btn-primary" onclick="clearParse()">清空</button>
+            </div>
+            <div class="status-message" id="parseStatus"></div>
+            <iframe id="playerFrame" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="fullscreen *"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const platforms = {
+            all: '全部平台',
+            iqiyi: { name: '爱奇艺', url: 'https://www.iqiyi.com/search/%s' },
+            youku: { name: '优酷', url: 'https://so.youku.com/search_video/q_%s' },
+            tencent: { name: '腾讯视频', url: 'https://v.qq.com/x/search/?q=%s' },
+            mgtv: { name: '芒果TV', url: 'https://www.mgtv.com/search/?q=%s' },
+            bilibili: { name: '哔哩哔哩', url: 'https://search.bilibili.com/all?keyword=%s' }
+        };
+
+        let currentPlatform = 'all';
+
+        document.querySelectorAll('.platform-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPlatform = btn.dataset.platform;
+            });
+        });
+
+        function searchMedia() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                showStatus('searchStatus', '请输入影视名称', 'error');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '';
+
+            if (currentPlatform === 'all') {
+                Object.keys(platforms).forEach(key => {
+                    if (key !== 'all' && platforms[key].url) {
+                        const url = platforms[key].url.replace('%s', encodeURIComponent(keyword));
+                        addResultItem(platforms[key].name, url);
+                    }
+                });
+            } else {
+                const platform = platforms[currentPlatform];
+                const url = platform.url.replace('%s', encodeURIComponent(keyword));
+                addResultItem(platform.name, url);
+            }
+
+            showStatus('searchStatus', `已为您找到 ${currentPlatform === 'all' ? 5 : 1} 个平台的搜索结果`, 'success');
+        }
+
+        function addResultItem(platformName, url) {
+            const resultsDiv = document.getElementById('searchResults');
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = `
+                <span class="title">${platformName}</span>
+                <div class="actions">
+                    <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem;" onclick="openLink('${url}')">打开</button>
+                    <button class="btn btn-copy" style="padding: 8px 16px; font-size: 0.8rem;" onclick="copyLink('${url}')">复制</button>
+                </div>
+            `;
+            resultsDiv.appendChild(item);
+        }
+
+        let currentIframeUrl = '';
+
+        function openLink(url) {
+            currentIframeUrl = url;
+            const iframe = document.getElementById('searchIframe');
+            const container = document.getElementById('searchIframeContainer');
+            iframe.src = url;
+            container.classList.add('active');
+            showStatus('searchStatus', '正在加载搜索结果...', 'success');
+        }
+
+        function closeIframe() {
+            const container = document.getElementById('searchIframeContainer');
+            const iframe = document.getElementById('searchIframe');
+            container.classList.remove('active');
+            iframe.src = '';
+            currentIframeUrl = '';
+        }
+
+        function refreshIframe() {
+            const iframe = document.getElementById('searchIframe');
+            iframe.src = currentIframeUrl;
+        }
+
+        function openInNewTab() {
+            if (currentIframeUrl) {
+                window.open(currentIframeUrl, '_blank');
+            }
+        }
+
+        function openParseSite(url) {
+            window.open(url, '_blank');
+            showStatus('parseStatus', '已打开解析网站，请粘贴影视链接', 'success');
+        }
+
+        async function copyLink(url) {
+            try {
+                await navigator.clipboard.writeText(url);
+                showStatus('searchStatus', '链接已复制到剪贴板', 'success');
+            } catch (err) {
+                showStatus('searchStatus', '复制失败，请手动复制', 'error');
+            }
+        }
+
+        function parseLink() {
+            const input = document.getElementById('parseInput').value.trim();
+            if (!input) {
+                showStatus('parseStatus', '请输入影视链接', 'error');
+                return;
+            }
+
+            let videoUrl = input;
+            if (!videoUrl.includes('://')) {
+                videoUrl = 'https://' + videoUrl;
+            }
+
+            const parseUrl = 'https://jx.xmflv.cc/?/url=' + encodeURIComponent(videoUrl);
+            
+            const playerFrame = document.getElementById('playerFrame');
+            playerFrame.src = parseUrl;
+            playerFrame.classList.add('active');
+            
+            showStatus('parseStatus', '正在解析视频...', 'success');
+        }
+
+        function clearParse() {
+            document.getElementById('parseInput').value = '';
+            document.getElementById('playerFrame').src = '';
+            document.getElementById('playerFrame').classList.remove('active');
+            document.getElementById('parseStatus').classList.remove('success', 'error');
+        }
+
+        function showStatus(elementId, message, type) {
+            const status = document.getElementById(elementId);
+            status.textContent = message;
+            status.className = `status-message ${type}`;
+            setTimeout(() => {
+                status.classList.remove('success', 'error');
+            }, 3000);
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') searchMedia();
+        });
+
+        document.getElementById('parseInput').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') parseLink();
+        });
+    </script>
+</body>
+</html>
